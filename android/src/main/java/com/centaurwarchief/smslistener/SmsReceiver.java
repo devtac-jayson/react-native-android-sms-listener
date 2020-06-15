@@ -53,9 +53,27 @@ public class SmsReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            String messageBody = "";
+            String phoneNumber = "";
+
             for (SmsMessage message : Telephony.Sms.Intents.getMessagesFromIntent(intent)) {
-                receiveMessage(message);
+            
+                phoneNumber = message.getOriginatingAddress();
+                messageBody += message.getMessageBody() + "";
             }
+
+            if (phoneNumber == "" || messageBody == "") {
+                return;
+            }
+
+            WritableNativeMap receivedMessage = new WritableNativeMap();
+
+            receivedMessage.putString("originatingAddress", phoneNumber);
+            receivedMessage.putString("body", messageBody);
+
+        mContext
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit(EVENT, receivedMessage);
 
             return;
         }
